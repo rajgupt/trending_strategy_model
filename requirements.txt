@@ -1,0 +1,5 @@
+pandas
+yfinance 
+dotenv
+sqlalchemy
+psycopg2
