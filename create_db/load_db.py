@@ -117,19 +117,16 @@ def create_db(db_url=DB_URL):
 def update_db(folder_path, db_url=DB_URL):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     engine = create_engine(db_url)
-    with engine.connect() as conn:
+    with engine.begin() as conn:  # Use a transaction block that auto-commits
         def is_processed(filename):
             result = conn.execute(text('SELECT 1 FROM processed_files WHERE filename = :filename'), {'filename': filename})
             return result.fetchone() is not None
 
         def mark_processed(filename):
-            try:
-                conn.execute(
-                    text('INSERT INTO processed_files (filename, processed_at) VALUES (:filename, :processed_at) ON CONFLICT DO NOTHING'),
-                    {'filename': filename, 'processed_at': datetime.now()}
-                )
-            except IntegrityError:
-                pass
+            conn.execute(
+                text('INSERT INTO processed_files (filename, processed_at) VALUES (:filename, :processed_at)'),
+                {'filename': filename, 'processed_at': datetime.now()}
+            )
 
         detail_files = [f for f in os.listdir(folder_path) if 'detail' in f]
         logging.info(f"Found {len(detail_files)} detail files in {folder_path}")
@@ -168,6 +165,6 @@ def update_db(folder_path, db_url=DB_URL):
 
 if __name__ == "__main__":
     # create_db(DB_URL)
-    # update_db('data/screen_detail/5/', DB_URL)
-    # update_db('data/screen_trend/5/', DB_URL)
-    pass
+    update_db('data/screen_detail/5/', DB_URL)
+    update_db('data/screen_trend/5/', DB_URL)
+    # pass

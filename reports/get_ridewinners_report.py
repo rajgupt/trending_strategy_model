@@ -12,9 +12,13 @@ parser = argparse.ArgumentParser(description='Download reports from ridewinners.
 parser.add_argument('--screen_id', type=int, required=True, help='Screen ID to download reports for')
 # add parser for start_date
 parser.add_argument('--start_date', type=str, default='2023-01-01', help='Start date in YYYY-MM-DD format')
+# add end_date argument
+parser.add_argument('--end_date', type=str, default=None, help='End date in YYYY-MM-DD format (optional)')
 args = parser.parse_args()
 screen_id = args.screen_id
 start_date = args.start_date
+end_date = args.end_date
+
 
 load_dotenv()
 API_TOKEN = os.getenv('API_TOKEN')
@@ -123,17 +127,25 @@ def download_trend_report(screen_id, date, must_trend_on_date=False):
         return None
 
 
-def get_weekdays_until_today(start_date):
+def get_weekdays_until_today(start_date, end_date=None):
     """
-    Returns a list of all weekdays (YYYY-MM-DD) from start_date until today.
+    Returns a list of all weekdays (YYYY-MM-DD) from start_date until end_date (inclusive).
+    If end_date is None, uses today.
     """
-    today = datetime.date.today()
+    if end_date is None:
+        end = datetime.date.today()
+    else:
+        if isinstance(end_date, str):
+            end = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+        else:
+            end = end_date
+
     if isinstance(start_date, str):
         d = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
     else:
         d = start_date
     weekdays = []
-    while d <= today:
+    while d <= end:
         if d.weekday() < 5:  # Monday to Friday
             weekdays.append(d.strftime("%Y-%m-%d"))
         d += datetime.timedelta(days=1)
